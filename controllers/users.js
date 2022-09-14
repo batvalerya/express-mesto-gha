@@ -37,8 +37,36 @@ const getUsers = async (req, res) => {
   }
 };
 
+const updateUser = async (req, res) => {
+  try {
+    const user = await User.findOneAndUpdate(
+      req.params._id,
+      { $set: { name: req.body.name, about: req.body.about } },
+      { new: true },
+    );
+    res.status(200).send(user);
+  } catch (e) {
+    res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
+  }
+};
+
+const updateAvatar = async (req, res) => {
+  try {
+    const user = await User.findOneAndUpdate(
+      req.params._id,
+      { $set: { avatar: req.body.avatar } },
+      { new: true },
+    );
+    res.status(200).send(user);
+  } catch (e) {
+    res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
+  }
+};
+
 module.exports = {
   createUser,
   getUserById,
   getUsers,
+  updateUser,
+  updateAvatar,
 };
