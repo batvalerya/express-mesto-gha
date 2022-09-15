@@ -44,11 +44,14 @@ const getUserById = async (req, res) => {
     const user = await User.findById(id);
 
     if (!user) {
-      res.status(400).send({ message: 'Пользователь по указанному _id не найден.' });
+      res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
       return;
     }
     res.status(200).send(user);
   } catch (e) {
+    if (id !== 'stringValue') {
+      res.status(400).send({ message: 'Переданы некорректные данные при запросе пользователя' });
+    }
     res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
   }
 };
