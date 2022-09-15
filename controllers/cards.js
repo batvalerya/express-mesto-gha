@@ -46,7 +46,7 @@ const likeCard = async (req, res) => {
       { new: true },
     );
     if (!card) {
-      res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
+      res.status(400).send({ message: 'Карточка с указанным _id не найдена.' });
       return;
     }
     res.status(200).send({ likes: card.likes });
@@ -63,7 +63,7 @@ const dislikeCard = async (req, res) => {
       { new: true },
     );
     if (!card) {
-      res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
+      res.status(400).send({ message: 'Карточка с указанным _id не найдена.' });
       return;
     }
     res.status(200).send({ likes: card.likes });
