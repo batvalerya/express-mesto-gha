@@ -5,8 +5,8 @@ const createUser = async (req, res) => {
     const user = await new User(req.body).save();
     res.status(200).send(user);
   } catch (e) {
-    if (e.errors.avatar.name === 'ValidatorError') {
-      res.status(400).send({ message: 'Ошибка в запросе' });
+    if (e.name || e.about || e.avatar === 'ValidatorError') {
+      res.status(400).send({ message: 'Переданы некорректные данные при создании пользователя' });
       return;
     }
     res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
@@ -14,12 +14,12 @@ const createUser = async (req, res) => {
 };
 
 const getUserById = async (req, res) => {
-  const { id } = req.params;
+  const id = req.params.userId;
   try {
     const user = await User.findById(id);
 
     if (!user) {
-      res.status(404).send({ message: 'Такого пользователя не существует' });
+      res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
       return;
     }
     res.status(200).send(user);
@@ -40,10 +40,15 @@ const getUsers = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const user = await User.findOneAndUpdate(
-      req.params._id,
+      req.user._id,
       { $set: { name: req.body.name, about: req.body.about } },
       { new: true },
     );
+
+    if (!user) {
+      res.status(404).send({ message: 'Пользователь с указанным id не найден.' });
+      return;
+    }
     res.status(200).send(user);
   } catch (e) {
     res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
@@ -53,10 +58,14 @@ const updateUser = async (req, res) => {
 const updateAvatar = async (req, res) => {
   try {
     const user = await User.findOneAndUpdate(
-      req.params._id,
+      req.user._id,
       { $set: { avatar: req.body.avatar } },
       { new: true },
     );
+    if (!user) {
+      res.status(404).send({ message: 'Пользователь с указанным id не найден.' });
+      return;
+    }
     res.status(200).send(user);
   } catch (e) {
     res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });

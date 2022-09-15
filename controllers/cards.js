@@ -10,14 +10,15 @@ const getCards = async (req, res) => {
 };
 
 const deleteCardById = async (req, res) => {
+  const id = req.params.cardId;
   try {
-    const card = await Card.findByIdAndRemove(req.params.cardId);
+    const card = await Card.findByIdAndDelete(id);
 
     if (!card) {
-      res.status(404).send({ message: 'Такой карточки не существует' });
+      res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
       return;
     }
-    res.status(200).send({ message: 'Карточка удалена' });
+    res.status(200).send(card);
   } catch (e) {
     res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
   }
@@ -29,6 +30,10 @@ const createCard = async (req, res) => {
     const card = await new Card(req.body).save();
     res.status(200).send(card);
   } catch (e) {
+    if (e.name || e.link === 'ValidatorError') {
+      res.status(400).send({ message: 'Переданы некорректные данные при создании карточки.' });
+      return;
+    }
     res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
   }
 };
@@ -40,6 +45,10 @@ const likeCard = async (req, res) => {
       { $addToSet: { likes: req.user._id } },
       { new: true },
     );
+    if (!card) {
+      res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
+      return;
+    }
     res.status(200).send({ likes: card.likes });
   } catch (e) {
     res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
@@ -53,6 +62,10 @@ const dislikeCard = async (req, res) => {
       { $pull: { likes: req.user._id } },
       { new: true },
     );
+    if (!card) {
+      res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
+      return;
+    }
     res.status(200).send({ likes: card.likes });
   } catch (e) {
     res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
