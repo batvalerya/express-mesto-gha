@@ -10,9 +10,8 @@ const getCards = async (req, res) => {
 };
 
 const deleteCardById = async (req, res) => {
-  const id = req.params.cardId;
   try {
-    const card = await Card.findByIdAndDelete(id);
+    const card = await Card.findByIdAndDelete(req.params.cardId);
 
     if (!card) {
       res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
@@ -20,6 +19,9 @@ const deleteCardById = async (req, res) => {
     }
     res.status(200).send(card);
   } catch (e) {
+    if (req.params.cardId !== 'stringValue') {
+      res.status(400).send({ message: 'Некорректный id карточки' });
+    }
     res.status(500).send({ message: 'Произошла ошибка на сервере', ...e });
   }
 };
@@ -65,7 +67,7 @@ const dislikeCard = async (req, res) => {
       { $pull: { likes: req.user._id } },
       { new: true },
     );
-    if (!req.params.cardId) {
+    if (!card) {
       res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
       return;
     }
