@@ -65,7 +65,7 @@ const dislikeCard = async (req, res) => {
       { $pull: { likes: req.user._id } },
       { new: true },
     );
-    if (!card) {
+    if (!req.params.cardId) {
       res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
       return;
     }
