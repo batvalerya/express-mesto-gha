@@ -4,7 +4,7 @@
   "description": "Проект Mesto фронтенд + бэкенд",
   "main": "app.js",
   "scripts": {
-    "lint": "npx eslint",
+    "lint": " npx eslint src/ ./app.js",
     "start": "node app.js",
     "dev": "nodemon app.js"
   },
@@ -13,7 +13,7 @@
     "url": "git+https://github.com/batvalerya/express-mesto-gha.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Valeriya Baturina",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/batvalerya/express-mesto-gha/issues"
