@@ -86,6 +86,15 @@ const getUsers = async (req, res) => {
   }
 };
 
+const getUserInfo = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    res.status(OK).send(user);
+  } catch (e) {
+    res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+  }
+};
+
 const updateAvatar = async (req, res) => {
   try {
     const user = await User.findOneAndUpdate(
@@ -147,4 +156,5 @@ module.exports = {
   updateUser,
   updateAvatar,
   login,
+  getUserInfo,
 };
