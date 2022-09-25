@@ -1,29 +1,34 @@
 const bcrypt = require('bcryptjs');
+// const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
 const OK = 200;
 const BAD_REQUEST = 400;
+const UNAUTHORIZED = 401;
 const NOT_FOUND = 404;
 const INTERNAL_SERVER_ERROR = 500;
 
 const createUser = (req, res) => {
-  bcrypt.hash(req.body.password, 10)
-    .then((hash) => User.create({
-      email: req.body.email,
-      password: hash,
-      name: req.body.name,
-      about: req.body.about,
-      avatar: req.body.avatar,
-    }))
-    .then((user) => {
-      res.status(OK).send(user);
+  const {
+    email,
+    password,
+    name,
+    about,
+    avatar,
+  } = req.body;
+
+  bcrypt.hash(password, 10)
+    .then((hashedPassword) => {
+      User.create({
+        email, name, about, avatar, password: hashedPassword,
+      })
+        .then((user) => res.send({ data: user }))
+        .catch(() => {
+          res.status(BAD_REQUEST).send({ message: 'Неверный логин или пароль' });
+        });
     })
-    .catch((e) => {
-      if (e.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании пользователя' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
-      }
+    .catch(() => {
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
     });
 };
 
@@ -105,10 +110,31 @@ const updateAvatar = async (req, res) => {
   }
 };
 
+const login = (req, res) => {
+  const { email, password } = req.body;
+
+  User.findOne({ email })
+    .orFail(() => new Error('Пользователе не найден'))
+    .then((user) => {
+      bcrypt.compare(password, user.password)
+        .then((isUserValid) => {
+          if (isUserValid) {
+            res.send({ data: user });
+          } else {
+            res.status(UNAUTHORIZED).send({ message: 'Неправильный логин или пароль' });
+          }
+        });
+    })
+    .catch((e) => {
+      res.send(e);
+    });
+};
+
 module.exports = {
   createUser,
   getUserById,
   getUsers,
   updateUser,
   updateAvatar,
+  login,
 };

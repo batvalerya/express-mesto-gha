@@ -5,9 +5,14 @@ const { cardRouter } = require('./routes/cards');
 
 const { userRoutes } = require('./routes/users');
 
+const { login, createUser } = require('./controllers/users');
+
 const { PORT = 3000 } = process.env;
 
 const app = express();
+
+app.post('/signup', express.json(), createUser);
+app.post('/signin', express.json(), login);
 
 app.use((req, res, next) => {
   req.user = {
