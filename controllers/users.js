@@ -1,14 +1,19 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const { NotFoundError } = require('../errors/NotFoundError');
+const { BadRequestError } = require('../errors/BadRequestError');
+const { DocumentNotFoundError } = require('../errors/DocumentNotFoundError');
+const { UnauthorizedError } = require('../errors/UnauthorizedError');
+const { ConflictError } = require('../errors/ConflictError');
 
 const OK = 200;
 const BAD_REQUEST = 400;
 const UNAUTHORIZED = 401;
 const NOT_FOUND = 404;
-const INTERNAL_SERVER_ERROR = 500;
+const CONFLICT_ERROR = 409;
 
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const {
     email,
     password,
@@ -23,16 +28,20 @@ const createUser = (req, res) => {
         email, name, about, avatar, password: hashedPassword,
       })
         .then((user) => res.send({ data: user }))
-        .catch(() => {
-          res.status(BAD_REQUEST).send({ message: 'Неверный логин или пароль' });
+        .catch((err) => {
+          if (err.code === 11000) {
+            next(new ConflictError(CONFLICT_ERROR, 'Логин занят'));
+          } else {
+            next(new BadRequestError(BAD_REQUEST, 'Некорректный запрос'));
+          }
         });
     })
-    .catch(() => {
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+    .catch((err) => {
+      next(err);
     });
 };
 
-const updateUser = async (req, res) => {
+const updateUser = async (req, res, next) => {
   const { name, about } = req.body;
   try {
     const user = await User.findByIdAndUpdate(
@@ -47,18 +56,18 @@ const updateUser = async (req, res) => {
     if (user) {
       res.status(OK).send(user);
     } else {
-      res.status(NOT_FOUND).send({ message: 'Пользователь с указанным id не найден.' });
+      next(new NotFoundError(NOT_FOUND, 'Пользователь с указанным id не найден.'));
     }
-  } catch (e) {
-    if (e.name === 'ValidationError') {
-      res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при обновлении профиля' });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new BadRequestError(BAD_REQUEST, 'Переданы некорректные данные при обновлении профиля'));
     } else {
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+      next(err);
     }
   }
 };
 
-const getUserById = async (req, res) => {
+const getUserById = async (req, res, next) => {
   const id = req.params.userId;
   try {
     const user = await User.findById(id);
@@ -66,36 +75,36 @@ const getUserById = async (req, res) => {
     if (user) {
       res.status(OK).send(user);
     } else {
-      res.status(NOT_FOUND).send({ message: 'Пользователь по указанному _id не найден.' });
+      next(new NotFoundError(NOT_FOUND, 'Пользователь по указанному _id не найден.'));
     }
-  } catch (e) {
-    if (e.name === 'CastError') {
-      res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при запросе пользователя' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      next(new BadRequestError(BAD_REQUEST, 'Переданы некорректные данные при запросе пользователя'));
     } else {
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+      next(err);
     }
   }
 };
 
-const getUsers = async (req, res) => {
+const getUsers = async (req, res, next) => {
   try {
     const users = await User.find({});
     res.status(OK).send(users);
-  } catch (e) {
-    res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+  } catch (err) {
+    next(err);
   }
 };
 
-const getUserInfo = async (req, res) => {
+const getUserInfo = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     res.status(OK).send(user);
-  } catch (e) {
-    res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+  } catch (err) {
+    next(err);
   }
 };
 
-const updateAvatar = async (req, res) => {
+const updateAvatar = async (req, res, next) => {
   try {
     const user = await User.findOneAndUpdate(
       req.user._id,
@@ -108,22 +117,23 @@ const updateAvatar = async (req, res) => {
     if (user) {
       res.status(OK).send(user);
     } else {
-      res.status(NOT_FOUND).send({ message: 'Пользователь с указанным id не найден.' });
+      next(new NotFoundError(NOT_FOUND, 'Пользователь по указанному _id не найден.'));
     }
-  } catch (e) {
-    if (e.name === 'ValidationError') {
-      res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при обновлении аватара' });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new BadRequestError(BAD_REQUEST, 'Переданы некорректные данные при обновлении аватара'));
     } else {
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка на сервере' });
+      next(err);
     }
   }
 };
 
-const login = (req, res) => {
+const login = (req, res, next) => {
   const { email, password } = req.body;
 
   User.findOne({ email })
-    .orFail(() => new Error('Пользователе не найден'))
+    .select('+password')
+    .orFail()
     .then((user) => {
       bcrypt.compare(password, user.password)
         .then((isUserValid) => {
@@ -140,12 +150,16 @@ const login = (req, res) => {
 
             res.send({ data: user });
           } else {
-            res.status(UNAUTHORIZED).send({ message: 'Неправильный логин или пароль' });
+            next(new UnauthorizedError(UNAUTHORIZED, 'Неправильный логин или пароль'));
           }
         });
     })
-    .catch((e) => {
-      res.send(e);
+    .catch((err) => {
+      if (err.name === 'DocumentNotFoundError') {
+        next(new DocumentNotFoundError(NOT_FOUND, 'Пользователь с таким логином не найден'));
+      } else {
+        next(err);
+      }
     });
 };
 

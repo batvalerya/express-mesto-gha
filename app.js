@@ -7,6 +7,7 @@ const { userRoutes } = require('./routes/users');
 
 const { login, createUser } = require('./controllers/users');
 const { auth } = require('./middlewares/auth');
+const errorHandler = require('./middlewares/error');
 
 const { PORT = 3000 } = process.env;
 
@@ -19,6 +20,7 @@ app.use(cookieParser());
 app.use(auth);
 app.use(userRoutes);
 app.use(cardRouter);
+app.use(errorHandler);
 
 app.patch('*', (req, res) => {
   res.status(404).send({ message: 'Страница не найдена' });

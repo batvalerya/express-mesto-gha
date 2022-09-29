@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { UnauthorizedError } = require('../errors/UnauthorizedError');
 
 const UNAUTHORIZED = 401;
 
@@ -10,7 +11,7 @@ const auth = (req, res, next) => {
   try {
     payload = jwt.verify(token, 'SECRET');
   } catch (err) {
-    res.status(UNAUTHORIZED).send({ message: 'Необходима авторизация' });
+    next(new UnauthorizedError(UNAUTHORIZED, 'Необходима авторизация'));
   }
 
   req.user = payload;
