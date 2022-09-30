@@ -26,7 +26,9 @@ userRoutes.patch('/users/me', express.json(), celebrate({
 }), updateUser);
 userRoutes.patch('/users/me/avatar', express.json(), celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().required(),
+    avatar: Joi.string().required().uri({
+      scheme: ['http', 'https'],
+    }),
   }),
 }), updateAvatar);
 

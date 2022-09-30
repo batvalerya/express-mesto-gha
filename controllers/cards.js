@@ -35,7 +35,7 @@ const deleteCardById = async (req, res, next) => {
     // }
   } catch (err) {
     if (err.name === 'CastError') {
-      next(new NotFoundError(NOT_FOUND, 'Карточка с указанным id не найдена.'));
+      next(new BadRequestError(BAD_REQUEST, 'Некорректный id карточки'));
     } else {
       next(err);
     }

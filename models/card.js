@@ -11,7 +11,13 @@ const cardSchema = new mongoose.Schema({
   link: {
     type: String,
     required: true,
-    validate: isURL,
+    // validate: isURL,
+    validate: {
+      validator(url) {
+        return /(http|https):\/\/[\w\d\-./]+/.test(url);
+      },
+      message: (props) => `${props.value} is not a valid avatar url`,
+    },
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
