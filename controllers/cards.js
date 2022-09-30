@@ -17,29 +17,49 @@ const getCards = async (req, res, next) => {
   }
 };
 
-const deleteCardById = async (req, res, next) => {
-  try {
-    const card = await Card.findById(req.params.cardId);
-    if (card.owner._id.toString() === req.user._id) {
-      card.remove();
-      res.status(OK).send(card);
-    } else {
-      next(new ForbiddenError(FORBIDDEN, 'Доступ запрещен'));
-    }
+// const deleteCardById = async (req, res, next) => {
+//   try {
+//     const card = await Card.findById(req.params.cardId);
+//     if (card.owner._id.toString() === req.user._id) {
+//       card.remove();
+//       res.status(OK).send(card);
+//     } else {
+//       next(new ForbiddenError(FORBIDDEN, 'Доступ запрещен'));
+//     }
 
-    // const card = await Card.findByIdAndDelete(req.params.cardId);
-    // if (card) {
-    //   res.status(OK).send(card);
-    // } else {
-    //   next(new NotFoundError(NOT_FOUND, 'Карточка с указанным id не найдена.'));
-    // }
-  } catch (err) {
-    if (err.name === 'CastError') {
-      next(new BadRequestError(BAD_REQUEST, 'Некорректный id карточки'));
-    } else {
-      next(err);
-    }
-  }
+//     // const card = await Card.findByIdAndDelete(req.params.cardId);
+//     // if (card) {
+//     //   res.status(OK).send(card);
+//     // } else {
+//     //   next(new NotFoundError(NOT_FOUND, 'Карточка с указанным id не найдена.'));
+//     // }
+//   } catch (err) {
+//     if (!err.name === 'CastError') {
+//       next(new BadRequestError(BAD_REQUEST, 'Некорректный id карточки'));
+//     } else {
+//       next(err);
+//     }
+//   }
+// };
+
+const deleteCardById = async (req, res, next) => {
+  Card.findById(req.params.cardId)
+    .orFail(new NotFoundError(NOT_FOUND, 'Карточка с указанным id не найдена.'))
+    .then((card) => {
+      if (card.owner._id.toString() === req.user._id) {
+        card.remove();
+        res.status(OK).send(card);
+      } else {
+        next(new ForbiddenError(FORBIDDEN, 'Доступ запрещен'));
+      }
+    })
+    .catch((err) => {
+      if (!err.name === 'CastError') {
+        next(new BadRequestError(BAD_REQUEST, 'Некорректный id карточки'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 const createCard = async (req, res, next) => {

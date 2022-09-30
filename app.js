@@ -20,7 +20,9 @@ app.post('/signup', express.json(), celebrate({
     password: Joi.string().required(),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string(),
+    avatar: Joi.string().uri({
+      scheme: ['http', 'https'],
+    }),
   }),
 }), createUser);
 
