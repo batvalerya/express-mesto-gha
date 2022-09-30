@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const { NotFoundError } = require('../errors/NotFoundError');
 const { BadRequestError } = require('../errors/BadRequestError');
-const { DocumentNotFoundError } = require('../errors/DocumentNotFoundError');
+// const { DocumentNotFoundError } = require('../errors/DocumentNotFoundError');
 const { UnauthorizedError } = require('../errors/UnauthorizedError');
 const { ConflictError } = require('../errors/ConflictError');
 
@@ -148,7 +148,7 @@ const login = (req, res, next) => {
               sameSite: true,
             });
 
-            res.send({ data: user });
+            res.send({ data: user.toJSON() });
           } else {
             next(new UnauthorizedError(UNAUTHORIZED, 'Неправильный логин или пароль'));
           }
@@ -156,7 +156,8 @@ const login = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'DocumentNotFoundError') {
-        next(new DocumentNotFoundError(NOT_FOUND, 'Пользователь с таким логином не найден'));
+        // next(new DocumentNotFoundError(NOT_FOUND, 'Пользователь с таким логином не найден'));
+        next(new UnauthorizedError(UNAUTHORIZED, 'Неправильный логин или пароль'));
       } else {
         next(err);
       }
