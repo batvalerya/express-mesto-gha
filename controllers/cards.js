@@ -21,7 +21,7 @@ const deleteCardById = async (req, res, next) => {
   Card.findById(req.params.cardId)
     .orFail(new NotFoundError(NOT_FOUND, 'Карточка с указанным id не найдена.'))
     .then((card) => {
-      if (!card.owner._id.toString() === req.user._id) {
+      if (card.owner._id.toString() !== req.user._id) {
         return next(new ForbiddenError(FORBIDDEN, 'Доступ запрещен'));
       }
       return card.remove()
