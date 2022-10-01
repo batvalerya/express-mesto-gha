@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     validate: {
       validator(url) {
-        return /(http|https):\/\/[\w\d\-./]+/.test(url);
+        return /(http|https):\/\/[\w\d\-./]+\.[a-z]{2,}/.test(url);
       },
       message: (props) => `${props.value} is not a valid avatar url`,
     },
